@@ -35,8 +35,11 @@ Deno.serve(async (req: Request) => {
   const day=new Date().toISOString().slice(0,10);
   const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(`${secret}|${day}|${ip}`));
   const bucket=Array.from(new Uint8Array(hash),n=>n.toString(16).padStart(2,'0')).join('');
-  const db=await fetch(`${url}/rest/v1/rpc/brunch_submit`,{method:'POST',headers:{apikey:secret,Authorization:`Bearer ${secret}`,'Content-Type':'application/json'},body:JSON.stringify({p_id:body.id,p_name:name,p_answers:body.answers,p_bucket:bucket}),signal:AbortSignal.timeout(10000)});
-  if(!db.ok){const error=await db.json().catch(()=>({}));return reply(error.message==='rate_limited'?429:error.message==='submission_conflict'?409:503,{error:error.message==='rate_limited'?'rate_limited':'submission_unavailable'});}
+  const isV2=body.resultVersion===2;
+  const selection=body.selection??{};
+  if(isV2&&(typeof selection!=='object'||selection===null||Array.isArray(selection)||Object.keys(selection).some(key=>!['primary','secondary'].includes(key))||Object.values(selection).some(value=>!Array.isArray(value)||value.length>3||value.some((id:unknown)=>typeof id!=='string'||!ids.includes(id)))))return reply(400,{error:'invalid_selection'});
+  const db=await fetch(`${url}/rest/v1/rpc/${isV2?'brunch_submit_v2':'brunch_submit'}`,{method:'POST',headers:{apikey:secret,Authorization:`Bearer ${secret}`,'Content-Type':'application/json'},body:JSON.stringify({p_id:body.id,p_name:name,p_answers:body.answers,p_bucket:bucket,...(isV2?{p_selection:selection}:{})}),signal:AbortSignal.timeout(10000)});
+  if(!db.ok){const error=await db.json().catch(()=>({}));return reply(error.message==='rate_limited'?429:error.message==='submission_conflict'?409:['invalid_selection','selection_required'].includes(error.message)?400:503,{error:error.message==='rate_limited'?'rate_limited':'submission_unavailable'});}
   return reply(200,await db.json());
  }catch{return reply(400,{error:'invalid_or_unavailable'});}
 });

@@ -2,6 +2,12 @@
 
 Sitio estático para el encuentro de Johanna Disent del 31 de octubre de 2026.
 
+## Resultado predominante y secundario
+
+Cada respuesta suma un punto. Se muestran los estilos de la puntuación más alta como predominantes y los de la siguiente puntuación positiva como secundarios, hasta tres estilos en total. Si empatan más estilos de los que caben, la participante elige entre los empatados: tres predominantes cuando hay más de tres en primer lugar, uno secundario cuando ya hay dos predominantes, o dos secundarios cuando hay un predominante. La elección no cambia puntuaciones. Con tres predominantes no se agrega un cuarto estilo; con nueve respuestas del mismo estilo no se inventa un secundario de cero puntos.
+
+La migración `202610250002_primary_secondary.sql` conserva respuestas y puntuaciones previas, añade los roles derivados y aplica el mismo criterio en servidor. `tests-v2.sql` verifica los casos principales y la imposibilidad de cambiar el desempate después de guardarlo. El panel indica «Desempate pendiente» en registros anteriores que requieran una elección de la participante.
+
 ## Desarrollo
 
 Servir esta carpeta con un servidor HTTP local en el puerto 4173. No se necesita instalar dependencias para el sitio. `npm test` ejecuta las pruebas del cuestionario y la exportación CSV. Usar herramientas con soporte vigente y parches de seguridad aplicados.

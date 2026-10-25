@@ -21,12 +21,28 @@ export const questions = [
  ['¿Qué hace que te identifiques con un outfit?', ['Es clásico y versátil','Tiene detalles delicados','Tiene fuerza visual','Es cómodo y relajado','Refleja originalidad','Es sensual y favorecedor','Es sofisticado y armonioso']],
 ].map(([text, options], index) => ({id:index+1, text, options:options.map((text,i)=>({id:styleIds[i],text}))}));
 
-export function scoreAnswers(answers) {
+export function scoreAnswers(answers, selection = {}) {
  if (!Array.isArray(answers) || answers.length !== 9 || answers.some(id=>!styleIds.includes(id))) throw new Error('Responde las nueve preguntas.');
  const scores = Object.fromEntries(styleIds.map(id=>[id,0]));
  answers.forEach(id=>scores[id]++);
  const max = Math.max(...Object.values(scores));
- return {scores, winners:styleIds.filter(id=>scores[id]===max)};
+ const winners=styleIds.filter(id=>scores[id]===max);
+ let primary=[...winners], secondary=[], needsChoice=null;
+ const choose=(role,candidates,count)=>{
+  const selected=selection?.[role] ?? [];
+  if(!Array.isArray(selected)||selected.length!==count||new Set(selected).size!==count||selected.some(id=>!candidates.includes(id))){
+   needsChoice={role,candidates,count};return [];
+  }
+  return candidates.filter(id=>selected.includes(id));
+ };
+ if(primary.length>3)primary=choose('primary',primary,3);
+ else if(primary.length<3){
+  const next=Math.max(0,...styleIds.filter(id=>scores[id]<max).map(id=>scores[id]));
+  const candidates=next>0?styleIds.filter(id=>scores[id]===next):[];
+  const room=3-primary.length;
+  secondary=candidates.length>room?choose('secondary',candidates,room):candidates;
+ }
+ return {scores,winners,primary,secondary,needsChoice};
 }
 export function shuffle(items, random = Math.random) {
  const copy=[...items];
