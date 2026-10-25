@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {questions,styleIds,scoreAnswers,shuffle,csvCell} from '../quiz-data.js';
+test('nine questions each have exactly the seven style associations',()=>{assert.equal(questions.length,9);for(const q of questions){assert.deepEqual(q.options.map(o=>o.id),styleIds);assert.equal(new Set(q.options.map(o=>o.text)).size,7);}});
+test('each style can be the unique winner',()=>{for(const id of styleIds){const r=scoreAnswers(Array(9).fill(id));assert.deepEqual(r.winners,[id]);assert.equal(r.scores[id],9);}});
+test('two-way maximum tie returns both and excludes lower scores',()=>{assert.deepEqual(scoreAnswers(['natural','romantico','natural','romantico','natural','romantico','natural','romantico','clasico']).winners,['romantico','natural']);});
+test('three-way tie returns every maximum',()=>{assert.deepEqual(scoreAnswers(['clasico','natural','creativo','clasico','natural','creativo','clasico','natural','creativo']).winners,['clasico','natural','creativo']);});
+test('invalid and incomplete submissions cannot score',()=>{for(const a of [null,[],Array(8).fill('natural'),Array(10).fill('natural'),Array(9).fill('fake'),[...Array(8).fill('natural'),null]])assert.throws(()=>scoreAnswers(a));});
+test('shuffle preserves identifiers and text association without mutating input',()=>{const source=questions[0].options;const result=shuffle(source,()=>0);assert.notDeepEqual(result,source);assert.deepEqual(result.map(o=>o.id).sort(),[...styleIds].sort());assert.equal(source[0].id,'clasico');for(const option of result)assert.equal(option,source.find(x=>x.id===option.id));});
+test('CSV quotes input and neutralizes spreadsheet formulas',()=>{assert.equal(csvCell('Ana "Luz"'),'"Ana ""Luz"""');for(const x of ['=1+1','+cmd','-2','@SUM(A1)','  =1'])assert.ok(csvCell(x).startsWith('"\''));});

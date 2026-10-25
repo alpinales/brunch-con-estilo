@@ -1,0 +1,5 @@
+project_id = "ebjutzozewrxrvuhmlvy"
+
+[functions.submit-quiz]
+# Public questionnaire: payload validated by the function, writes restricted to service role.
+verify_jwt = false
